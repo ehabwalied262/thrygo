@@ -1,4 +1,5 @@
 'use client'
+
 interface VideoInfoProps {
   videoTitle: string;
   channelInfo: { name: string; avatar: string };

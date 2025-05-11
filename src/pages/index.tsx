@@ -47,7 +47,7 @@ const Home: React.FC = () => {
 
     try {
       const response = await axios.post(
-        'http://localhost:5000/',
+        'https://644e-41-46-153-165.ngrok-free.app',
         { youtube_url: url.trim() },
         {
           headers: {

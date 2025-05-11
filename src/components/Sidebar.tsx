@@ -54,6 +54,24 @@ const Sidebar: React.FC<SidebarProps> = ({ onLearnContent, isSidebarOpen }) => {
   const MIN_NAME_LENGTH = 3;
   const MAX_NAME_LENGTH = 50;
 
+  // نقل الـ useEffect هنا
+  useEffect(() => {
+    setContextMenu(null);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = () => setContextMenu(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [activeSection, currentFolderPath]);
+
+  // تنظيف الـ refs
+  useEffect(() => {
+    return () => {
+      itemRefs.current.clear();
+    };
+  }, [activeSection, currentFolderPath]);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedChats = localStorage.getItem('chats');
@@ -443,10 +461,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onLearnContent, isSidebarOpen }) => {
     const currentFolder = path.length ? getCurrentFolder() : structure;
     const items = [];
 
-    useEffect(() => {
-      setContextMenu(null);
-    }, []);
-
     if (activeSection === 'files') {
       if (path.length > 0) {
         const backKey = 'back';
@@ -585,7 +599,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onLearnContent, isSidebarOpen }) => {
     const handleClickOutside = () => setContextMenu(null);
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
+  }, [activeSection, currentFolderPath]);
 
   return (
     <div
