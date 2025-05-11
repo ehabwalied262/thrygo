@@ -2,26 +2,63 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+@import '@fortawesome/fontawesome-free/css/all.min.css';
+
+body {
+  @apply bg-dark-bg text-text-primary font-sans transition-colors duration-300;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+.dark-mode {
+  @apply bg-dark-bg text-text-primary;
+}
+
+.light-mode {
+  @apply bg-light-bg text-text-primary;
+}
+
+.navbar {
+  @apply bg-dark-nav shadow-md;
+}
+
+.dark-mode .navbar {
+  @apply bg-dark-sidebar;
+}
+
+.light-mode .navbar {
+  @apply bg-light-nav;
+}
+
+.spinner {
+  @apply border-4 border-gray-200 border-t-primary-blue rounded-full w-6 h-6 animate-spin;
+}
+
+.tooltip .tooltip-text {
+  @apply invisible bg-dark-nav text-text-primary text-center rounded px-2 py-1 absolute z-10 top-full left-1/2 -translate-x-1/2 opacity-0 transition-opacity duration-300 text-xs whitespace-nowrap;
+}
+
+.tooltip:hover .tooltip-text {
+  @apply visible opacity-100;
+}
+
+.toast {
+  @apply invisible min-w-[250px] bg-toast-green text-white text-center rounded px-4 py-2 fixed z-10 right-5 bottom-5 opacity-0 transition-opacity duration-300;
+}
+
+.toast.show {
+  @apply visible opacity-100;
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+.animate-slide-down {
+  animation: slide-down 0.2s ease-in-out;
 }
