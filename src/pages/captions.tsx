@@ -100,7 +100,14 @@ const Captions: React.FC = () => {
           </>
         )}
         {isChatMode && <ChatInterface onBack={() => setIsChatMode(false)} />}
-        {isQuizMode && <QuizMode onBack={() => setIsQuizMode(false)} videoId={videoId as string} />}
+        {isQuizMode && (
+        <QuizMode
+          onBack={() => setIsQuizMode(false)}
+          videoId={videoId as string}
+          numQuestions={5}
+          questionType="multiple_choice"
+        />
+      )}
       </div>
 
       <Sidebar onLearnContent={handleLearnContent} isSidebarOpen={isSidebarOpen} />  

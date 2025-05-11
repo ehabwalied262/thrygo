@@ -46,15 +46,15 @@ const Navbar: React.FC<{ isSidebarOpen: boolean; setIsSidebarOpen: (value: boole
         throw new Error('Missing required fields from server response.');
       }
 
-      router.push({
-        pathname: '/captions',
-        query: {
-          videoTitle: response.data.video_title,
-          languages: JSON.stringify(response.data.languages),
-          channelInfo: JSON.stringify(response.data.channel_info),
-          videoId: videoId,
-        },
-      });
+    const queryString = new URLSearchParams({
+      videoTitle: response.data.video_title,
+      languages: JSON.stringify(response.data.languages),
+      channelInfo: JSON.stringify(response.data.channel_info),
+      videoId: videoId,
+    }).toString();
+
+    router.push(`/captions?${queryString}`);
+
 
       // مسح الـ input وإغلاقه بعد نجاح العملية
       setUrl('');
@@ -112,7 +112,8 @@ const Navbar: React.FC<{ isSidebarOpen: boolean; setIsSidebarOpen: (value: boole
         <button
           className={`bg-[#1a1a1a] hover:bg-[#2a2a2a] text-white px-4 py-2 rounded-lg border border-[#2a2a2a] flex items-center space-x-4 transition ${isInputOpen && window.innerWidth < 768 ? 'hidden' : ''}`}
         >
-          <i class="fa-solid fa-user"></i>
+          <i className="fa-solid fa-user"></i>
+
           <span className="hidden md:inline">Sign in</span>
         </button>
       </div>

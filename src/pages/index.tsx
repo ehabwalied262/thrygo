@@ -2,7 +2,14 @@
 
 import { useState } from 'react';
 import axios from 'axios';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/router';
+
+// Define the expected structure of the API response
+interface ApiResponse {
+  video_title: string;
+  languages: string[] | object; // Adjust based on the actual structure of languages
+  channel_info: object; // Adjust based on the actual structure of channel_info
+}
 
 const Home: React.FC = () => {
   const [url, setUrl] = useState('');
@@ -10,7 +17,7 @@ const Home: React.FC = () => {
   const [error, setError] = useState('');
   const router = useRouter();
 
-  // دالة لاستخراج videoId من رابط الـ YouTube
+  // Function to extract videoId from YouTube URL
   const extractVideoId = (url: string): string | null => {
     const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
     const match = url.match(regex);
@@ -22,13 +29,14 @@ const Home: React.FC = () => {
     setLoading(true);
     setError('');
 
-    // تحقق من إن url مش فاضي وإنه رابط يوتيوب صالح
+    // Validate that URL is not empty
     if (!url.trim()) {
       setError('Please enter a YouTube URL.');
       setLoading(false);
       return;
     }
 
+    // Validate that URL is a YouTube URL
     if (!url.includes('youtube.com') && !url.includes('youtu.be')) {
       setError('Please enter a valid YouTube URL.');
       setLoading(false);
@@ -46,7 +54,7 @@ const Home: React.FC = () => {
     console.log('Extracted videoId:', videoId);
 
     try {
-      const response = await axios.post(
+      const response = await axios.post<ApiResponse>(
         'https://644e-41-46-153-165.ngrok-free.app',
         { youtube_url: url.trim() },
         {
@@ -58,18 +66,19 @@ const Home: React.FC = () => {
 
       console.log('Response from server:', response.data);
 
-      // Validation للتأكد إن الـ response فيه البيانات المتوقعة
+      // Validate that the response contains the required fields
       if (!response.data.languages || !response.data.video_title || !response.data.channel_info) {
         throw new Error('Invalid response from server: Missing required fields (languages, video_title, or channel_info).');
       }
 
+      // Navigate to the captions page with query parameters
       router.push({
         pathname: '/captions',
         query: {
           videoTitle: response.data.video_title,
           languages: JSON.stringify(response.data.languages),
           channelInfo: JSON.stringify(response.data.channel_info),
-          videoId: videoId,
+          videoId,
         },
       });
     } catch (e: any) {
@@ -83,7 +92,7 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#0f0f0f] text-white">
       <div className="pt-32 flex items-center justify-center">
-        <div className="w-full max-w-xl bg-[#1a1a1a] p-8 rounded-2xl shadow-xl border border-[#2a2a2a]">
+        <div className="w-full max-w-xl bg-[#1a1a1a] p-8 rounded-2xl shadow-xl border+ border border-[#2a2a2a]">
           <h1 className="text-3xl font-semibold text-white mb-4 text-center">
             <span className="text-[#2f81f7]">Thrygo</span>, From YouTube to your brain.
           </h1>

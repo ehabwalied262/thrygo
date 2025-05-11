@@ -10,6 +10,7 @@ interface FolderItem {
   type: 'folder' | 'file';
   children?: FolderItem[];
   content?: string;
+  videoId?: string; // Add optional videoId
 }
 
 const Modal = dynamic(() => import('./Modal'), {
@@ -178,41 +179,43 @@ const Sidebar: React.FC<SidebarProps> = ({ onLearnContent, isSidebarOpen }) => {
     handleCreateOrUpdateChat(videoId, videoTitle);
   };
 
-  const handleContextMenu = (
-    e: React.MouseEvent,
-    item: FolderItem | ChatItem | null,
-    index: number | null,
-    isRoot: boolean,
-    itemKey: string
-  ) => {
-    e.preventDefault();
-    e.stopPropagation();
+const handleContextMenu = (
+  e: React.MouseEvent,
+  item: FolderItem | ChatItem | null,
+  index: number | null,
+  isRoot: boolean,
+  itemKey: string
+) => {
+  e.preventDefault();
+  e.stopPropagation();
 
-    let items: { label: string; action: () => void; icon: string }[] = [];
-    const sidebarRect = sidebarRef.current?.getBoundingClientRect();
-    const itemElement = itemRefs.current.get(itemKey);
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+  let items: { label: string; action: () => void; icon: string }[] = [];
+  const sidebarRect = sidebarRef.current?.getBoundingClientRect();
+  const itemElement = itemRefs.current.get(itemKey);
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
 
-    let x = 0;
-    let y = 0;
-    if (itemElement && sidebarRect) {
-      const itemRect = itemElement.getBoundingClientRect();
-      x = itemRect.left - sidebarRect.left;
-      y = itemRect.bottom - sidebarRect.top;
-    } else {
-      x = e.pageX - (sidebarRect?.left || 0);
-      y = e.pageY - (sidebarRect?.top || 0);
-    }
+  let x = 0;
+  let y = 0;
+  let itemRect: DOMRect | undefined;
 
-    const menuWidth = 150;
-    const menuHeight = 150;
-    if (x + menuWidth > sidebarRect!.width) {
-      x = sidebarRect!.width - menuWidth - 10;
-    }
-    if (y + menuHeight > viewportHeight - (sidebarRect?.top || 0)) {
-      y = (itemElement ? itemRect.top - sidebarRect!.top : e.pageY - sidebarRect!.top) - menuHeight - 10;
-    }
+  if (itemElement && sidebarRect) {
+    itemRect = itemElement.getBoundingClientRect();
+    x = itemRect.left - sidebarRect.left;
+    y = itemRect.bottom - sidebarRect.top;
+  } else {
+    x = e.pageX - (sidebarRect?.left || 0);
+    y = e.pageY - (sidebarRect?.top || 0);
+  }
+
+  const menuWidth = 150;
+  const menuHeight = 150;
+  if (x + menuWidth > sidebarRect!.width) {
+    x = sidebarRect!.width - menuWidth - 10;
+  }
+  if (y + menuHeight > viewportHeight - (sidebarRect?.top || 0)) {
+    y = (itemElement && itemRect ? itemRect.top - sidebarRect!.top : e.pageY - sidebarRect!.top) - menuHeight - 10;
+  }
 
     if (activeSection === 'files') {
       if (isRoot || !item) {

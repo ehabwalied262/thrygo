@@ -8,18 +8,19 @@ interface Question {
   options?: string[];
   correct_answer: string | boolean;
 }
+type QuestionType = 'multiple_choice' | 'true_false' | 'open_ended';
 
 interface QuizModeProps {
   onBack: () => void;
   videoId: string;
   numQuestions: number;
-  questionType: 'mcq' | 'true_false' | 'mixed';
+  questionType: QuestionType;
 }
 
-const QuizMode: React.FC<QuizModeProps> = ({ onBack, videoId, numQuestions, questionType }) => {
+const QuizMode: React.FC<QuizModeProps> = ({ onBack, videoId, numQuestions = 5, questionType = 'multiple_choice' }) => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [userAnswers, setUserAnswers] = useState<(string | boolean)[]>([]);
+  const [userAnswers, setUserAnswers] = useState<(string | boolean | null)[]>([]);
   const [refreshCounts, setRefreshCounts] = useState<number[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -63,7 +64,7 @@ const QuizMode: React.FC<QuizModeProps> = ({ onBack, videoId, numQuestions, ques
 
   const handleAnswerChange = (answer: string | boolean) => {
     const newAnswers = [...userAnswers];
-    newAnswers[currentQuestionIndex] = answer;
+    newAnswers.splice(currentQuestionIndex, 1); 
     setUserAnswers(newAnswers);
     setShowFeedback(false); // Reset feedback when answer changes
     setIsCorrect(null);
