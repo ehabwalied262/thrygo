@@ -4,14 +4,16 @@ import React from 'react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import { useSetRecoilState } from 'recoil'; // Import Recoil hook
+import { captionsAtom } from '../recoil/atoms'; // Import captionsAtom
 
 const Navbar: React.FC<{ isSidebarOpen: boolean; setIsSidebarOpen: (value: boolean) => void }> = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const [url, setUrl] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isInputOpen, setIsInputOpen] = useState(false); // حالة لفتح/إغلاق الـ input
-
+  const [isInputOpen, setIsInputOpen] = useState(false);
   const router = useRouter();
+  const setCaptions = useSetRecoilState(captionsAtom); // Hook to reset captions
 
   const extractVideoId = (url: string): string | null => {
     const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
@@ -23,6 +25,7 @@ const Navbar: React.FC<{ isSidebarOpen: boolean; setIsSidebarOpen: (value: boole
     e.preventDefault();
     setError('');
     setLoading(true);
+    setCaptions([]); // Reset captions when a new URL is submitted
 
     if (!url.trim()) {
       setError('Please enter a YouTube URL.');
@@ -38,7 +41,7 @@ const Navbar: React.FC<{ isSidebarOpen: boolean; setIsSidebarOpen: (value: boole
     }
 
     try {
-      const response = await axios.post('https://644e-41-46-153-165.ngrok-free.app', {
+      const response = await axios.post('http://localhost:5000', {
         youtube_url: url.trim(),
       });
 
@@ -46,17 +49,16 @@ const Navbar: React.FC<{ isSidebarOpen: boolean; setIsSidebarOpen: (value: boole
         throw new Error('Missing required fields from server response.');
       }
 
-    const queryString = new URLSearchParams({
-      videoTitle: response.data.video_title,
-      languages: JSON.stringify(response.data.languages),
-      channelInfo: JSON.stringify(response.data.channel_info),
-      videoId: videoId,
-    }).toString();
+      const queryString = new URLSearchParams({
+        videoTitle: response.data.video_title,
+        languages: JSON.stringify(response.data.languages),
+        channelInfo: JSON.stringify(response.data.channel_info),
+        videoId: videoId,
+      }).toString();
 
-    router.push(`/captions?${queryString}`);
+      router.push(`/captions?${queryString}`);
 
-
-      // مسح الـ input وإغلاقه بعد نجاح العملية
+      // Clear input and close it after success
       setUrl('');
       setIsInputOpen(false);
     } catch (e: any) {
@@ -70,9 +72,10 @@ const Navbar: React.FC<{ isSidebarOpen: boolean; setIsSidebarOpen: (value: boole
   return (
     <nav className="fixed top-0 left-0 w-full z-50 px-8 py-4 bg-[#0f0f0f] border-b border-[#2a2a2a] flex items-center justify-between">
       <div className="text-2xl font-bold text-[#2f81f7]"> 
-        <i className="fa-solid fa-bars mr-2 hover:cursor-pointer"
-         onClick={() => setIsSidebarOpen(!isSidebarOpen)}>     
-      </i> {isInputOpen ? (window.innerWidth < 768 ? null : 'Thrygo') : 'Thrygo'}
+        <i
+          className="fa-solid fa-bars mr-2 hover:cursor-pointer"
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        ></i> {isInputOpen ? (window.innerWidth < 768 ? null : 'Thrygo') : 'Thrygo'}
       </div>
 
       <div className="flex items-center space-x-2">
@@ -113,7 +116,6 @@ const Navbar: React.FC<{ isSidebarOpen: boolean; setIsSidebarOpen: (value: boole
           className={`bg-[#1a1a1a] hover:bg-[#2a2a2a] text-white px-4 py-2 rounded-lg border border-[#2a2a2a] flex items-center space-x-4 transition ${isInputOpen && window.innerWidth < 768 ? 'hidden' : ''}`}
         >
           <i className="fa-solid fa-user"></i>
-
           <span className="hidden md:inline">Sign in</span>
         </button>
       </div>

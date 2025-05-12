@@ -19,9 +19,19 @@ export const fetchCaptions = async (
   return response.data;
 };
 
-export const askQuestion = async (question: string) => {
-  const response = await api.post('/ask_question', { question });
-  return response.data;
+export const askQuestion = async (question: string, captions?: string[]) => {
+  try {
+    const response = await fetch('http://localhost:5000/ask_question', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, captions }),
+    });
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
+    return data;
+  } catch (error: any) {
+    throw new Error(error.message);
+  }
 };
 
 export const fetchChannelData = async (channelUrls: string[]) => {

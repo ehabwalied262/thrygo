@@ -76,3 +76,9 @@ export const chatsAtom = atom<ChatItem[]>({
   key: 'chatsAtom',
   default: [],
 });
+
+// New atom for folder chat mode
+export const isFolderChatModeAtom = atom({
+  key: 'isFolderChatMode',
+  default: false,
+});

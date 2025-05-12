@@ -55,7 +55,7 @@ const Home: React.FC = () => {
 
     try {
       const response = await axios.post<ApiResponse>(
-        'https://644e-41-46-153-165.ngrok-free.app',
+        'http://localhost:5000',
         { youtube_url: url.trim() },
         {
           headers: {
@@ -92,7 +92,9 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#0f0f0f] text-white">
       <div className="pt-32 flex items-center justify-center">
-        <div className="w-full max-w-xl bg-[#1a1a1a] p-8 rounded-2xl shadow-xl border+ border border-[#2a2a2a]">
+        <div className="w-full max-w-xl bg-[#1a1a1a] p-8 rounded-2xl shadow-xl border+ border border-[#2a2a2a]"
+         style={{ boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3)' }}
+>
           <h1 className="text-3xl font-semibold text-white mb-4 text-center">
             <span className="text-[#2f81f7]">Thrygo</span>, From YouTube to your brain.
           </h1>

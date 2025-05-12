@@ -1,42 +1,47 @@
-'use client'
+'use client';
 
 import { useState, useEffect } from 'react';
 
+// Interface for a quiz question
 interface Question {
-  type: 'mcq' | 'true_false';
-  question: string;
-  options?: string[];
-  correct_answer: string | boolean;
+  type: 'mcq' | 'true_false'; // Question type: multiple-choice or true/false
+  question: string; // The question text
+  options?: string[]; // Options for MCQ questions (optional)
+  correct_answer: string | boolean; // Correct answer (string for MCQ, boolean for true/false)
 }
-type QuestionType = 'multiple_choice' | 'true_false' | 'open_ended';
 
+// Interface for QuizMode component props
 interface QuizModeProps {
-  onBack: () => void;
-  videoId: string;
-  numQuestions: number;
-  questionType: QuestionType;
+  onBack: () => void; // Callback to navigate back
+  videoId: string; // ID of the video associated with the quiz
+  numQuestions: number; // Number of questions in the quiz
+  questionType: 'mcq' | 'true_false' | 'mixed'; // Type of questions in the quiz
 }
 
-const QuizMode: React.FC<QuizModeProps> = ({ onBack, videoId, numQuestions = 5, questionType = 'multiple_choice' }) => {
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [userAnswers, setUserAnswers] = useState<(string | boolean | null)[]>([]);
-  const [refreshCounts, setRefreshCounts] = useState<number[]>([]);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+// QuizMode component: Handles the quiz functionality
+const QuizMode: React.FC<QuizModeProps> = ({ onBack, videoId, numQuestions, questionType }) => {
+  // State declarations
+  const [questions, setQuestions] = useState<Question[]>([]); // List of quiz questions
+  const [sessionId, setSessionId] = useState<string | null>(null); // Unique session ID for the quiz
+  const [userAnswers, setUserAnswers] = useState<(string | boolean)[]>([]); // User's selected answers
+  const [refreshCounts, setRefreshCounts] = useState<number[]>([]); // Tracks refresh attempts per question
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0); // Index of the current question
+  const [isLoading, setIsLoading] = useState(false); // Loading state for API calls
   const [quizResult, setQuizResult] = useState<{
-    score: number;
-    total: number;
-    percentage: number;
-    message: string;
-  } | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [showFeedback, setShowFeedback] = useState(false); // State to show feedback after checking
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null); // State to track if the answer is correct
+    score: number; // User's score
+    total: number; // Total possible score
+    percentage: number; // Percentage score
+    message: string; // Result message
+  } | null>(null); // Quiz result data
+  const [error, setError] = useState<string | null>(null); // Error message if API call fails
+  const [showFeedback, setShowFeedback] = useState(false); // Controls visibility of answer feedback
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null); // Tracks if the current answer is correct
 
+  // Effect to fetch quiz data when component mounts or dependencies change
   useEffect(() => {
+    // Async function to fetch quiz from the server
     const fetchQuiz = async () => {
-      setIsLoading(true);
+      setIsLoading(true); // Set loading state
       try {
         const response = await fetch('http://localhost:5000/generate_quiz', {
           method: 'POST',
@@ -48,32 +53,36 @@ const QuizMode: React.FC<QuizModeProps> = ({ onBack, videoId, numQuestions = 5, 
           }),
         });
         const data = await response.json();
-        if (data.error) throw new Error(data.error);
-        setQuestions(data.questions);
-        setSessionId(data.session_id);
-        setUserAnswers(new Array(data.questions.length).fill(null));
-        setRefreshCounts(new Array(data.questions.length).fill(0));
+        if (data.error) throw new Error(data.error); // Handle server errors
+
+        setQuestions(data.questions); // Store questions
+        setSessionId(data.session_id); // Store session ID
+        setUserAnswers(new Array(data.questions.length).fill(null)); // Initialize answers array
+        setRefreshCounts(new Array(data.questions.length).fill(0)); // Initialize refresh counts
       } catch (err: any) {
-        setError(err.message);
+        setError(err.message); // Set error message
       } finally {
-        setIsLoading(false);
+        setIsLoading(false); // Reset loading state
       }
     };
-    fetchQuiz();
-  }, [videoId, numQuestions, questionType]);
 
+    fetchQuiz(); // Trigger quiz fetch
+  }, [videoId, numQuestions, questionType]); // Dependencies for re-fetching
+
+  // Handle user selecting an answer
   const handleAnswerChange = (answer: string | boolean) => {
-    const newAnswers = [...userAnswers];
-    newAnswers.splice(currentQuestionIndex, 1); 
-    setUserAnswers(newAnswers);
-    setShowFeedback(false); // Reset feedback when answer changes
-    setIsCorrect(null);
+    const newAnswers = [...userAnswers]; // Copy current answers
+    newAnswers[currentQuestionIndex] = answer; // Update answer for current question
+    setUserAnswers(newAnswers); // Update state
+    setShowFeedback(false); // Hide feedback when answer changes
+    setIsCorrect(null); // Reset correctness state
   };
 
+  // Handle refreshing the current question
   const handleRefresh = async () => {
-    if (!sessionId || refreshCounts[currentQuestionIndex] >= 5) return;
+    if (!sessionId || refreshCounts[currentQuestionIndex] >= 5) return; // Prevent refresh if limits reached
 
-    setIsLoading(true);
+    setIsLoading(true); // Set loading state
     try {
       const response = await fetch('http://localhost:5000/refresh_quiz_question', {
         method: 'POST',
@@ -84,64 +93,73 @@ const QuizMode: React.FC<QuizModeProps> = ({ onBack, videoId, numQuestions = 5, 
         }),
       });
       const data = await response.json();
-      if (data.error) throw new Error(data.error);
+      if (data.error) throw new Error(data.error); // Handle server errors
 
+      // Update the current question
       const newQuestions = [...questions];
       newQuestions[currentQuestionIndex] = data.new_question;
       setQuestions(newQuestions);
 
+      // Update refresh count
       const newRefreshCounts = [...refreshCounts];
       newRefreshCounts[currentQuestionIndex] = data.refresh_count;
       setRefreshCounts(newRefreshCounts);
 
+      // Reset the user's answer for the refreshed question
       const newAnswers = [...userAnswers];
       newAnswers[currentQuestionIndex] = null;
       setUserAnswers(newAnswers);
 
-      setShowFeedback(false);
-      setIsCorrect(null);
+      setShowFeedback(false); // Hide feedback
+      setIsCorrect(null); // Reset correctness
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message); // Set error message
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Reset loading state
     }
   };
 
+  // Check if the user's answer is correct
   const handleCheckAnswer = () => {
-    const userAnswer = userAnswers[currentQuestionIndex];
-    const correctAnswer = questions[currentQuestionIndex].correct_answer;
+    const userAnswer = userAnswers[currentQuestionIndex]; // Get user's answer
+    const correctAnswer = questions[currentQuestionIndex].correct_answer; // Get correct answer
 
-    if (userAnswer === null) return;
+    if (userAnswer === null) return; // Do nothing if no answer selected
 
+    // Handle true/false questions
     if (questions[currentQuestionIndex].type === 'true_false') {
       const normalizedUserAnswer = typeof userAnswer === 'string' ? userAnswer.toLowerCase() === 'true' : userAnswer;
       setIsCorrect(normalizedUserAnswer === correctAnswer);
     } else {
+      // Handle MCQ questions
       setIsCorrect(String(userAnswer).toLowerCase() === String(correctAnswer).toLowerCase());
     }
-    setShowFeedback(true);
+    setShowFeedback(true); // Show feedback
   };
 
+  // Navigate to the next question
   const handleNextQuestion = () => {
     if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setShowFeedback(false);
-      setIsCorrect(null);
+      setCurrentQuestionIndex(currentQuestionIndex + 1); // Move to next question
+      setShowFeedback(false); // Hide feedback
+      setIsCorrect(null); // Reset correctness
     }
   };
 
+  // Navigate to the previous question
   const handlePrevQuestion = () => {
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
-      setShowFeedback(false);
-      setIsCorrect(null);
+      setCurrentQuestionIndex(currentQuestionIndex - 1); // Move to previous question
+      setShowFeedback(false); // Hide feedback
+      setIsCorrect(null); // Reset correctness
     }
   };
 
+  // Submit the quiz and get results
   const handleSubmitQuiz = async () => {
-    if (!sessionId) return;
+    if (!sessionId) return; // Prevent submission without session ID
 
-    setIsLoading(true);
+    setIsLoading(true); // Set loading state
     try {
       const response = await fetch('http://localhost:5000/submit_quiz', {
         method: 'POST',
@@ -152,15 +170,16 @@ const QuizMode: React.FC<QuizModeProps> = ({ onBack, videoId, numQuestions = 5, 
         }),
       });
       const data = await response.json();
-      if (data.error) throw new Error(data.error);
-      setQuizResult(data);
+      if (data.error) throw new Error(data.error); // Handle server errors
+      setQuizResult(data); // Store quiz results
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message); // Set error message
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Reset loading state
     }
   };
 
+  // Render loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -169,6 +188,7 @@ const QuizMode: React.FC<QuizModeProps> = ({ onBack, videoId, numQuestions = 5, 
     );
   }
 
+  // Render error state
   if (error) {
     return (
       <div className="text-text-primary text-center">
@@ -183,6 +203,7 @@ const QuizMode: React.FC<QuizModeProps> = ({ onBack, videoId, numQuestions = 5, 
     );
   }
 
+  // Render quiz results
   if (quizResult) {
     return (
       <div className="bg-dark-sidebar p-6 rounded-lg shadow-lg text-text-primary">
@@ -202,12 +223,15 @@ const QuizMode: React.FC<QuizModeProps> = ({ onBack, videoId, numQuestions = 5, 
     );
   }
 
+  // Return null if no questions are loaded
   if (questions.length === 0) return null;
 
-  const currentQuestion = questions[currentQuestionIndex];
+  const currentQuestion = questions[currentQuestionIndex]; // Current question data
 
+  // Render quiz question interface
   return (
     <div className="bg-dark-sidebar p-6 rounded-lg shadow-lg text-text-primary">
+      {/* Header with back button and question counter */}
       <div className="flex justify-between items-center mb-6">
         <button
           onClick={onBack}
@@ -219,7 +243,11 @@ const QuizMode: React.FC<QuizModeProps> = ({ onBack, videoId, numQuestions = 5, 
           Question {currentQuestionIndex + 1} of {questions.length}
         </span>
       </div>
+
+      {/* Question text */}
       <h2 className="text-xl font-semibold mb-4">{currentQuestion.question}</h2>
+
+      {/* Render MCQ options */}
       {currentQuestion.type === 'mcq' ? (
         <div className="space-y-3 mb-6">
           {currentQuestion.options?.map((option, index) => (
@@ -238,6 +266,7 @@ const QuizMode: React.FC<QuizModeProps> = ({ onBack, videoId, numQuestions = 5, 
           ))}
         </div>
       ) : (
+        /* Render true/false options */
         <div className="space-y-3 mb-6">
           <label className="flex items-center space-x-2">
             <input
@@ -265,6 +294,8 @@ const QuizMode: React.FC<QuizModeProps> = ({ onBack, videoId, numQuestions = 5, 
           </label>
         </div>
       )}
+
+      {/* Show feedback after checking answer */}
       {showFeedback && (
         <div className="mb-4">
           {isCorrect ? (
@@ -279,6 +310,8 @@ const QuizMode: React.FC<QuizModeProps> = ({ onBack, videoId, numQuestions = 5, 
           )}
         </div>
       )}
+
+      {/* Navigation and action buttons */}
       <div className="flex justify-between items-center">
         <div className="flex gap-3">
           <button
